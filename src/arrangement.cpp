@@ -58,6 +58,26 @@ Face_handle remove_edge_from_arr(Segment_Arrangement_2& arr, Halfedge_handle h) 
     return CGAL::remove_edge(arr, h);
 }
 
+std::vector<py::object> find_segment_zone(Segment_Arrangement_2& self, Segment_2& seg) {
+    std::vector<CGAL::Object> zone_elems;
+    CGAL::zone(self, seg, std::back_inserter(zone_elems));
+
+    std::vector<py::object> py_zone_elems;
+    for (CGAL::Object& elem: zone_elems) {
+        Face_handle f;
+        Halfedge_handle h;
+        Vertex_handle v;
+        if (CGAL::assign(f, elem)) {
+            py_zone_elems.push_back(py::cast(f));
+        } else if (CGAL::assign(h, elem)) {
+            py_zone_elems.push_back(py::cast(h));
+        } else {
+            py_zone_elems.push_back(py::cast(v));
+        }
+    }
+    return py_zone_elems;
+}
+
 py::object find_in_arrangement(Segment_Arrangement_2& arr, Point_2& query_point) {
     CGAL::Arr_naive_point_location<Segment_Arrangement_2> pl(arr);
     CGAL::Arr_point_location_result<Segment_Arrangement_2>::Type obj = pl.locate(query_point);
@@ -203,6 +223,7 @@ void init_arrangement(py::module &m) {
         .def("remove_vertex", &remove_vertex_from_arr)
         .def("remove_edge", &remove_edge_from_arr)
         .def("find", &find_in_arrangement)
+        .def("zone", &find_segment_zone)
     ;
 
     py::class_<Vertex, Vertex_handle>(sub, "Vertex")
